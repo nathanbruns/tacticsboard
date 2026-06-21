@@ -979,7 +979,7 @@ function buildPanel(id,side){
   const col=team.color;
   const header=document.createElement('div');
   header.style.cssText=`padding:7px 5px 4px;text-align:center;font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid ${col};margin-bottom:2px;color:#fff`;
-  header.innerHTML=`${team.flag} ${key}`;
+  header.innerHTML=`${flagImg(key,18)} ${key}`;
   el.appendChild(header);
   // Manager row
   if(team.manager){
@@ -1067,7 +1067,7 @@ function openTeamPicker(side){
       const grid=document.createElement('div');grid.className='conf-grid';
       groups[g].forEach(({name,team})=>{
         const card=document.createElement('div');card.className='team-card';
-        card.innerHTML=`<span class="tc-flag">${team.flag}</span><div><div class="tc-name">${name}</div><div class="tc-grp">Group ${team.group}</div></div>`;
+        card.innerHTML=`${flagImg(name,22)}<div><div class="tc-name">${name}</div><div class="tc-grp">${team.group?'Group '+team.group:team.conf||''}</div></div>`;
         card.onclick=()=>{
           if(side==='home'){homeTeam=name;}else{awayTeam=name;}
           updateTeamButtons();
@@ -1086,11 +1086,12 @@ function openTeamPicker(side){
 }
 
 function updateTeamButtons(){
-  const ht=TEAMS[homeTeam];const at=awayTeam?TEAMS[awayTeam]:null;
-  document.getElementById('home-flag').textContent=ht?ht.flag:'🏠';
-  document.getElementById('home-name').textContent=homeTeam||'Select';
-  document.getElementById('away-flag').textContent=at?at.flag:'🌍';
-  document.getElementById('away-name').textContent=awayTeam||'Select Team';
+  const hf = document.getElementById('home-flag');
+  const af = document.getElementById('away-flag');
+  if(hf) hf.innerHTML = homeTeam ? flagImg(homeTeam, 18) : '🏠';
+  if(af) af.innerHTML = awayTeam ? flagImg(awayTeam, 18) : '🌍';
+  document.getElementById('home-name').textContent = homeTeam || 'Select';
+  document.getElementById('away-name').textContent = awayTeam || 'Select Team';
 }
 
 document.getElementById('btn-home').onclick=()=>openTeamPicker('home');
@@ -2208,6 +2209,35 @@ document.getElementById('btn-export-ratings').onclick = ()=>{
   else{alert('Pop-up blocked — please allow pop-ups for this page.');}
 };
 
+
+// ── COUNTRY FLAGS (self-hosted in /flags/) ──
+const FLAG_CODES = {
+  "Mexico":"mx","South Africa":"za","South Korea":"kr","Czechia":"cz",
+  "Canada":"ca","Bosnia & Herz.":"ba","Qatar":"qa","Switzerland":"ch",
+  "Brazil":"br","Morocco":"ma","Scotland":"gb-sct","Haiti":"ht",
+  "USA":"us","Paraguay":"py","Australia":"au","Türkiye":"tr",
+  "Germany":"de","Curaçao":"cw","Ivory Coast":"ci","Ecuador":"ec",
+  "Netherlands":"nl","Japan":"jp","Sweden":"se","Tunisia":"tn",
+  "Belgium":"be","Egypt":"eg","Iran":"ir","New Zealand":"nz",
+  "Spain":"es","Cape Verde":"cv","Saudi Arabia":"sa","Uruguay":"uy",
+  "France":"fr","Senegal":"sn","Norway":"no","Iraq":"iq",
+  "Argentina":"ar","Algeria":"dz","Austria":"at","Jordan":"jo",
+  "Portugal":"pt","DR Congo":"cd","Uzbekistan":"uz","Colombia":"co",
+  "England":"gb-eng","Croatia":"hr","Ghana":"gh","Panama":"pa",
+  "Arsenal":"gb-eng","Man City":"gb-eng","Chelsea":"gb-eng","Liverpool":"gb-eng",
+  "Man United":"gb-eng","Tottenham":"gb-eng","Aston Villa":"gb-eng","Newcastle":"gb-eng",
+  "Brighton":"gb-eng","Fulham":"gb-eng","Nott'm Forest":"gb-eng","Brentford":"gb-eng",
+  "Crystal Palace":"gb-eng","Everton":"gb-eng","Bournemouth":"gb-eng",
+  "Leeds":"gb-eng","Sunderland":"gb-eng","Coventry":"gb-eng",
+  "Hull City":"gb-eng","Ipswich":"gb-eng",
+};
+function flagImg(teamName, size=20) {
+  const code = FLAG_CODES[teamName];
+  if(!code) return TEAMS[teamName]?.flag || '🏳';
+  const h = Math.round(size * 0.67);
+  return `<img src="flags/${code}.svg" width="${size}" height="${h}" style="border-radius:2px;vertical-align:middle;object-fit:cover;margin-right:4px" alt="${teamName}" onerror="this.style.display='none'">`;
+}
+
 // ── INIT ──
 let LEAGUE_SLUG = 'worldcup2026';
 let TEAMS = {}; // populated from Supabase on load
@@ -2271,6 +2301,10 @@ async function initApp() {
     console.log('[TB] hiding overlay...');
     if(ov) ov.style.display='none';
     console.log('[TB] DONE!');
+    const _t2={'worldcup2026':{icon:'🏆',text:'2026 World Cup'},'premier-league':{icon:'🦁',text:'Premier League'}};
+    const _tt=_t2[LEAGUE_SLUG]||{icon:'⚽',text:'Tactics Board'};
+    const _si2=document.getElementById('shell-icon');const _st2=document.getElementById('shell-title');
+    if(_si2)_si2.textContent=_tt.icon; if(_st2)_st2.textContent=_tt.text;
     // Update header with league name
     const titles2 = {'worldcup2026':{icon:'🏆',text:'2026 World Cup'},'premier-league':{icon:'🦁',text:'Premier League'}};
     const t2 = titles2[LEAGUE_SLUG]||{icon:'⚽',text:'Tactics Board'};
