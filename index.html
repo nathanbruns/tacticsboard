@@ -331,7 +331,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:#fff;font-famil
     <div style="width:36px;height:36px;border:3px solid rgba(255,255,255,.1);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite"></div>
     <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">Loading rosters…</div>
   </div>
-  <style>@keyframes spin{{to{{transform:rotate(360deg)}}}}</style>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 
 <!-- Loading overlay -->
 <div id="loading-overlay" style="position:fixed;inset:0;top:42px;background:var(--bg);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px">
@@ -2216,15 +2216,45 @@ async function initApp() {
       </div>`;
     return;
   }
-  document.getElementById('loading-overlay').style.display='none';
+  // Hide overlay
+  const ov = document.getElementById('loading-overlay');
+  if(ov) ov.style.display='none';
+
+  // Wire resize
+  window.removeEventListener('resize', resize);
   window.addEventListener('resize', resize);
-  // Multiple resize attempts to catch layout settling
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    resize(); updateTeamButtons(); renderPanels();
-    // Second attempt after 300ms for iframe layout
-    setTimeout(()=>{ resize(); draw(); }, 300);
-    setTimeout(()=>{ resize(); draw(); }, 800);
-  }));
+
+  // Force canvas sizing — must happen before draw() which guards on W/H
+  const wrap = document.querySelector('.pitch-wrap');
+  const cv2 = document.getElementById('cv');
+  if(wrap && cv2) {
+    W = wrap.offsetWidth || window.innerWidth - 280;
+    H = wrap.offsetHeight || window.innerHeight - 80;
+    console.log('[TB] Canvas size:', W, H);
+    const dpr = window.devicePixelRatio || 1;
+    cv2.width = Math.round(W * dpr);
+    cv2.height = Math.round(H * dpr);
+    cv2.style.width = W + 'px';
+    cv2.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  } else {
+    console.warn('[TB] pitch-wrap or canvas not found!', !!wrap, !!cv2);
+  }
+
+  // Render
+  try {
+    updateTeamButtons();
+    renderPanels();
+    draw();
+    // Second resize pass after layout settles
+    setTimeout(() => { resize(); draw(); }, 200);
+  } catch(err) {
+    console.error('[TB] Render error:', err);
+    if(ov) {
+      ov.style.display='flex';
+      ov.innerHTML='<div style="color:#ef4444;padding:20px;text-align:center;font-size:13px">Render error: '+err.message+'</div>';
+    }
+  }
 }
 
 function showToast(msg, isError=false) {
