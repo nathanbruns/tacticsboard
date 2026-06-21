@@ -2252,33 +2252,6 @@ document.getElementById('btn-export-ratings').onclick = ()=>{
 };
 
 
-// ── COUNTRY FLAGS (self-hosted in /flags/) ──
-const FLAG_CODES = {
-  "Mexico":"mx","South Africa":"za","South Korea":"kr","Czechia":"cz",
-  "Canada":"ca","Bosnia & Herz.":"ba","Qatar":"qa","Switzerland":"ch",
-  "Brazil":"br","Morocco":"ma","Scotland":"gb-sct","Haiti":"ht",
-  "USA":"us","Paraguay":"py","Australia":"au","Türkiye":"tr",
-  "Germany":"de","Curaçao":"cw","Ivory Coast":"ci","Ecuador":"ec",
-  "Netherlands":"nl","Japan":"jp","Sweden":"se","Tunisia":"tn",
-  "Belgium":"be","Egypt":"eg","Iran":"ir","New Zealand":"nz",
-  "Spain":"es","Cape Verde":"cv","Saudi Arabia":"sa","Uruguay":"uy",
-  "France":"fr","Senegal":"sn","Norway":"no","Iraq":"iq",
-  "Argentina":"ar","Algeria":"dz","Austria":"at","Jordan":"jo",
-  "Portugal":"pt","DR Congo":"cd","Uzbekistan":"uz","Colombia":"co",
-  "England":"gb-eng","Croatia":"hr","Ghana":"gh","Panama":"pa",
-  "Arsenal":"gb-eng","Man City":"gb-eng","Chelsea":"gb-eng","Liverpool":"gb-eng",
-  "Man United":"gb-eng","Tottenham":"gb-eng","Aston Villa":"gb-eng","Newcastle":"gb-eng",
-  "Brighton":"gb-eng","Fulham":"gb-eng","Nott'm Forest":"gb-eng","Brentford":"gb-eng",
-  "Crystal Palace":"gb-eng","Everton":"gb-eng","Bournemouth":"gb-eng",
-  "Leeds":"gb-eng","Sunderland":"gb-eng","Coventry":"gb-eng",
-  "Hull City":"gb-eng","Ipswich":"gb-eng",
-};
-function flagImg(teamName, size=20) {
-  const code = FLAG_CODES[teamName];
-  if(!code) return TEAMS[teamName]?.flag || '🏳';
-  const h = Math.round(size * 0.67);
-  return `<img src="flags/${code}.svg" width="${size}" height="${h}" style="border-radius:2px;vertical-align:middle;object-fit:cover;margin-right:4px" alt="${teamName}" onerror="this.style.display='none'">`;
-}
 
 // ── INIT ──
 let LEAGUE_SLUG = 'worldcup2026';
