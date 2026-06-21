@@ -2075,8 +2075,12 @@ async function initApp() {
   }
   document.getElementById('loading-overlay').style.display='none';
   window.addEventListener('resize', resize);
+  // Multiple resize attempts to catch layout settling
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     resize(); updateTeamButtons(); renderPanels();
+    // Second attempt after 300ms for iframe layout
+    setTimeout(()=>{ resize(); draw(); }, 300);
+    setTimeout(()=>{ resize(); draw(); }, 800);
   }));
 }
 
