@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Tactics Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<nav class="shell-nav">
+  <div class="shell-brand">
+    <span style="font-size:20px">⚽</span>
+    <span class="shell-brand-text">Tactics Board</span>
+  </div>
+  <div class="shell-tabs" id="shell-tabs"></div>
+</nav>
+
+<iframe class="app-frame" id="app-frame" src="" allow="fullscreen"></iframe>
+
+<script>
+// ── TAB DEFINITIONS ──
+const TABS = [
+  {
+    id: 'worldcup',
+    label: '2026 World Cup',
+    emoji: '🏆',
+    dot: '#B22234',
+    src: 'apps/worldcup.html',
+  },
+  {
+    id: 'premier-league',
+    label: 'Premier League',
+    emoji: '🦁',
+    dot: '#3D195B',
+    src: 'apps/premier-league.html',
+  },
+];
+
+let activeTab = localStorage.getItem('tactics_active_tab') || TABS[0].id;
+
+function buildTabs() {
+  const nav = document.getElementById('shell-tabs');
+  nav.innerHTML = '';
+  TABS.forEach(tab => {
+    const btn = document.createElement('button');
+    btn.className = 'shell-tab' + (tab.id === activeTab ? ' active' : '');
+    btn.innerHTML = `
+      <span class="tab-dot" style="background:${tab.dot}"></span>
+      ${tab.emoji} ${tab.label}
+    `;
+    btn.onclick = () => switchTab(tab.id);
+    nav.appendChild(btn);
+  });
+}
+
+function switchTab(id) {
+  activeTab = id;
+  localStorage.setItem('tactics_active_tab', id);
+  const tab = TABS.find(t => t.id === id);
+  document.getElementById('app-frame').src = tab.src;
+  buildTabs();
+}
+
+// Init
+buildTabs();
+const initTab = TABS.find(t => t.id === activeTab) || TABS[0];
+document.getElementById('app-frame').src = initTab.src;
+</script>
+</body>
+</html>
