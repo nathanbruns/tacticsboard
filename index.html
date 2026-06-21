@@ -1100,16 +1100,7 @@ document.getElementById('btn-away').onclick=()=>openTeamPicker('away');
 document.getElementById('xbtn').onclick=()=>{const a=document.createElement('a');a.download='WC2026_Tactics.png';a.href=cv.toDataURL('image/png');a.click();};
 
 
-// ── SAVE / LOAD ──
-const STORAGE_KEY = 'wc2026_saves';
-
-function getSaves(){
-  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); }
-  catch(e){ return []; }
-}
-function setSaves(saves){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(saves));
-}
+// ── SAVE / LOAD (Supabase) ──
 
 function serializeState(){
   return {
@@ -1207,16 +1198,29 @@ function openSaveModal(){
   nameRow.appendChild(inp);
 
   const saveBtn = document.createElement('button'); saveBtn.className='save-now-btn'; saveBtn.textContent='Save';
-  saveBtn.onclick=()=>{
+  saveBtn.onclick=async()=>{
     const name = inp.value.trim() || `Matchup ${Date.now()}`;
-    const saves = getSaves();
-    saves.unshift({ id: Date.now(), name, date: new Date().toISOString(), state: serializeState() });
-    setSaves(saves);
-    buildSavesList();
-    inp.value='';
-    // Flash confirmation
-    saveBtn.textContent='✓ Saved!'; saveBtn.style.background='#1e6830';
-    setTimeout(()=>{ saveBtn.textContent='Save'; saveBtn.style.background=''; },1500);
+    saveBtn.textContent='Saving…'; saveBtn.disabled=true;
+    const state = serializeState();
+    try {
+      await db.createSave(LEAGUE_SLUG, {
+        name,
+        homeTeam: state.homeTeam,
+        awayTeam: state.awayTeam,
+        tokens:   state.tokens,
+        drawings: state.drawings,
+        ball:     ball ? {...ball} : null,
+        playSteps,
+        managerRatings,
+      });
+      saveBtn.textContent='✓ Saved!'; saveBtn.style.background='#1e6830';
+      setTimeout(()=>{ saveBtn.textContent='Save'; saveBtn.style.background=''; saveBtn.disabled=false; },1500);
+      buildSavesList();
+    } catch(e) {
+      console.error('Save failed:', e);
+      saveBtn.textContent='✗ Failed'; saveBtn.style.background='#c0392b';
+      setTimeout(()=>{ saveBtn.textContent='Save'; saveBtn.style.background=''; saveBtn.disabled=false; },2000);
+    }
   };
   nameRow.appendChild(saveBtn);
   body.appendChild(nameRow);
@@ -1238,13 +1242,14 @@ function openSaveModal(){
   setTimeout(()=>inp.select(),50);
 }
 
-function buildSavesList(){
+async function buildSavesList(){
   const listDiv = document.getElementById('saves-list-inner');
   if(!listDiv) return;
+  listDiv.innerHTML='<div class="no-saves">Loading…</div>';
+  let saves;
+  try { saves = await db.getSaves(LEAGUE_SLUG); } catch(e) { saves=[]; }
   listDiv.innerHTML='';
-  const saves = getSaves();
-
-  if(!saves.length){
+  if(!saves||!saves.length){
     listDiv.innerHTML='<div class="no-saves">No saved matchups yet.<br>Set up a lineup above and hit Save!</div>';
     return;
   }
@@ -1255,14 +1260,14 @@ function buildSavesList(){
     const info = document.createElement('div'); info.className='save-item-info';
     const nm = document.createElement('div'); nm.className='save-item-name'; nm.textContent=save.name;
     const meta = document.createElement('div'); meta.className='save-item-meta';
-    const d = new Date(save.date);
-    const st = save.state;
-    const pCount = (st.tokens||[]).length;
-    const rCount = (st.tokens||[]).filter(t=>t.rating!=null).length;
-    const dCount = (st.drawings||[]).length;
-    const home = st.homeTeam||'?'; const away = st.awayTeam||'?';
-    const homeFlag = TEAMS[home]?TEAMS[home].flag:'🏠';
-    const awayFlag = TEAMS[away]?TEAMS[away].flag:'🌍';
+    const d = new Date(save.created_at || Date.now());
+    const home = save.home_team || '?';
+    const away = save.away_team || '?';
+    const pCount = (save.tokens||[]).length;
+    const rCount = (save.tokens||[]).filter(t=>t.rating!=null).length;
+    const dCount = (save.drawings||[]).length;
+    const homeFlag = TEAMS[home]?.flag || '🏠';
+    const awayFlag = TEAMS[away]?.flag || '🌍';
     meta.textContent = `${homeFlag} ${home} vs ${awayFlag} ${away}  ·  ${pCount} players${rCount>0?' · '+rCount+' rated':''}  ·  ${dCount} drawings  ·  ${d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
     info.appendChild(nm); info.appendChild(meta);
 
@@ -1271,16 +1276,29 @@ function buildSavesList(){
     const loadBtn = document.createElement('button'); loadBtn.className='si-load'; loadBtn.textContent='Load';
     loadBtn.onclick=()=>{
       if(confirm(`Load "${save.name}"? Current state will be replaced.`)){
-        deserializeState(save.state);
+        deserializeState({
+          homeTeam: save.home_team,
+          awayTeam: save.away_team,
+          tokens:   save.tokens        || [],
+          drawings: save.drawings      || [],
+          ball:     save.ball          || null,
+          playSteps:      save.play_steps      || [],
+          managerRatings: save.manager_ratings || {},
+        });
         document.getElementById('smo').style.display='none';
       }
     };
 
     const delBtn = document.createElement('button'); delBtn.className='si-del'; delBtn.textContent='✕';
     delBtn.title='Delete save';
-    delBtn.onclick=()=>{
+    delBtn.onclick=async()=>{
       if(confirm(`Delete "${save.name}"?`)){
-        const saves2=getSaves(); saves2.splice(idx,1); setSaves(saves2); buildSavesList();
+        try {
+          await db.deleteSave(save.id);
+          buildSavesList();
+        } catch(e) {
+          alert('Delete failed: ' + e.message);
+        }
       }
     };
 
