@@ -373,9 +373,9 @@ const FLAG_CODES = {
 };
 function flagImg(teamName, size=20) {
   const code = FLAG_CODES[teamName];
-  if(!code) return TEAMS[teamName]?.flag || '🏳';
+  if(!code) return ''; // no emoji fallback — just nothing
   const h = Math.round(size * 0.67);
-  return `<img src="flags/${code}.svg" width="${size}" height="${h}" style="border-radius:2px;vertical-align:middle;object-fit:cover;margin-right:4px" alt="${teamName}" onerror="this.style.display='none'">`;
+  return `<img src="flags/${code}.svg" width="${size}" height="${h}" style="border-radius:2px;vertical-align:middle;object-fit:cover;margin-right:4px;flex-shrink:0" alt="${teamName}" onerror="this.style.display='none'">`;
 }
 
 // ── SUPABASE DB CLIENT ──
@@ -405,6 +405,7 @@ const db = {
       TEAMS[t.name]={
         id:t.id,flag:t.flag||'🏳',color:t.color||'#fff',
         group:t.grp||'',conf:t.conf||'',manager:t.manager||'',
+        // Note: we don't use t.flag (emoji from DB) — we use FLAG_CODES + SVG files instead
         players:(players||[]).filter(p=>p.team_id===t.id).map(p=>({
           no:p.jersey_no,name:p.name,
           s:p.short_name||p.name.split(' ').pop(),
@@ -926,7 +927,7 @@ function openManagerRatingPopup(side, teamKey, rowEl, ratingEl){
   const hdr=document.createElement('div');
   hdr.style.cssText='padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:space-between;background:rgba(79,195,247,.06)';
   const info=document.createElement('div');
-  info.innerHTML=`<div style="font-size:13px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#fff">Rate Manager</div><div style="font-size:12px;color:var(--accent);font-weight:700;margin-top:1px">${TEAMS[teamKey]&&TEAMS[teamKey].flag||''} ${fullName}</div>`;
+  info.innerHTML=`<div style="font-size:13px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#fff">Rate Manager</div><div style="font-size:12px;color:var(--accent);font-weight:700;margin-top:1px">${flagImg(teamKey,14)} ${fullName}</div>`;
   const cls=document.createElement('button');cls.textContent='×';cls.style.cssText='background:transparent;border:none;color:#8899aa;font-size:18px;cursor:pointer;line-height:1;padding:0';cls.onclick=()=>ov.style.display='none';
   hdr.appendChild(info);hdr.appendChild(cls);box.appendChild(hdr);
 
@@ -1309,9 +1310,7 @@ async function buildSavesList(){
     const pCount = (save.tokens||[]).length;
     const rCount = (save.tokens||[]).filter(t=>t.rating!=null).length;
     const dCount = (save.drawings||[]).length;
-    const homeFlag = TEAMS[home]?.flag || '🏠';
-    const awayFlag = TEAMS[away]?.flag || '🌍';
-    meta.textContent = `${homeFlag} ${home} vs ${awayFlag} ${away}  ·  ${pCount} players${rCount>0?' · '+rCount+' rated':''}  ·  ${dCount} drawings  ·  ${d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
+    meta.textContent = `${home} vs ${away}  ·  ${pCount} players${rCount>0?' · '+rCount+' rated':''}  ·  ${dCount} drawings  ·  ${d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
     info.appendChild(nm); info.appendChild(meta);
 
     const btns = document.createElement('div'); btns.className='save-item-btns';
@@ -2078,8 +2077,8 @@ document.getElementById('btn-export-ratings').onclick = ()=>{
 
   const home = homeTeam || 'Home';
   const away = awayTeam || 'Away';
-  const homeFlag = TEAMS[home]?.flag||'';
-  const awayFlag = TEAMS[away]?.flag||'';
+  const homeFlag = ''; // flags handled by SVG in export
+  const awayFlag = '';
   const dateStr = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
 
   function ratingColor(r){
