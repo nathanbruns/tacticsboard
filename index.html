@@ -205,8 +205,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:#fff;font-famil
 <!-- SHELL NAV -->
 <nav class="shell-nav">
   <div class="shell-brand">
-    <span style="font-size:18px">⚽</span>
-    <span class="shell-brand-text">Tactics Board</span>
+    <span style="font-size:18px" id="shell-icon">⚽</span>
+    <span class="shell-brand-text" id="shell-title">Tactics Board</span>
   </div>
   <div class="shell-tabs">
     <button class="shell-tab active" id="tab-wc" onclick="switchLeague('worldcup2026','USA')">
@@ -394,9 +394,16 @@ let CURRENT_LEAGUE = 'worldcup2026';
 function switchLeague(slug, defaultHome) {
   if(slug === CURRENT_LEAGUE) return;
   CURRENT_LEAGUE = slug;
-  // Update tab styles
   document.getElementById('tab-wc').classList.toggle('active', slug==='worldcup2026');
   document.getElementById('tab-pl').classList.toggle('active', slug==='premier-league');
+  // Update header branding
+  const titles = {
+    'worldcup2026':   {icon:'🏆', text:'2026 World Cup'},
+    'premier-league': {icon:'🦁', text:'Premier League'},
+  };
+  const t = titles[slug] || {icon:'⚽', text:'Tactics Board'};
+  document.getElementById('shell-icon').textContent = t.icon;
+  document.getElementById('shell-title').textContent = t.text;
   // Reset state and reload
   tokens=[]; drawings=[]; ball=null; playSteps=[]; managerRatings={home:null,away:null};
   tweenArrows=null; isPlaying=false;
@@ -2246,6 +2253,11 @@ async function initApp() {
     console.log('[TB] hiding overlay...');
     if(ov) ov.style.display='none';
     console.log('[TB] DONE!');
+    // Update header with league name
+    const titles2 = {'worldcup2026':{icon:'🏆',text:'2026 World Cup'},'premier-league':{icon:'🦁',text:'Premier League'}};
+    const t2 = titles2[LEAGUE_SLUG]||{icon:'⚽',text:'Tactics Board'};
+    const si=document.getElementById('shell-icon');const st=document.getElementById('shell-title');
+    if(si)si.textContent=t2.icon; if(st)st.textContent=t2.text;
     setTimeout(() => { resize(); draw(); }, 200);
   } catch(err) {
     console.error('[TB] Render error:', err.message, err.stack);
