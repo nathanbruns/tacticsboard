@@ -2196,7 +2196,9 @@ async function initApp() {
   // Show loading state
   document.getElementById('loading-overlay').style.display='flex';
   try {
+    console.log('[TB] Loading league:', LEAGUE_SLUG);
     const data = await db.loadLeague(LEAGUE_SLUG);
+    console.log('[TB] League loaded, teams:', Object.keys(data.TEAMS).length);
     Object.assign(TEAMS, data.TEAMS);
     // Update branding from league
     if(data.league) {
@@ -2205,8 +2207,13 @@ async function initApp() {
   } catch(e) {
     console.error('Failed to load league data:', e);
     document.getElementById('loading-overlay').innerHTML =
-      '<div style="color:#ef4444;font-size:14px;text-align:center;padding:20px">' +
-      '⚠️ Could not connect to database.<br><small>' + e.message + '</small></div>';
+      `<div style="color:#ef4444;font-size:14px;text-align:center;padding:20px;font-family:monospace">
+        ⚠️ Database error<br><br>
+        <small style="color:#ff9999">${e.message}</small><br><br>
+        <small style="color:#888">League: ${LEAGUE_SLUG}<br>
+        URL: ${SUPABASE_URL}<br>
+        Check browser console (F12) for details</small>
+      </div>`;
     return;
   }
   document.getElementById('loading-overlay').style.display='none';
