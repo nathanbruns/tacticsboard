@@ -2216,9 +2216,8 @@ async function initApp() {
       </div>`;
     return;
   }
-  // Hide overlay
+  // Will hide overlay after successful render
   const ov = document.getElementById('loading-overlay');
-  if(ov) ov.style.display='none';
 
   // Wire resize
   window.removeEventListener('resize', resize);
@@ -2241,18 +2240,23 @@ async function initApp() {
     console.warn('[TB] pitch-wrap or canvas not found!', !!wrap, !!cv2);
   }
 
-  // Render
+  // Render — step by step with logging
   try {
+    console.log('[TB] calling updateTeamButtons...');
     updateTeamButtons();
+    console.log('[TB] calling renderPanels...');
     renderPanels();
+    console.log('[TB] calling draw...');
     draw();
-    // Second resize pass after layout settles
+    console.log('[TB] hiding overlay...');
+    if(ov) ov.style.display='none';
+    console.log('[TB] DONE!');
     setTimeout(() => { resize(); draw(); }, 200);
   } catch(err) {
-    console.error('[TB] Render error:', err);
+    console.error('[TB] Render error:', err.message, err.stack);
     if(ov) {
       ov.style.display='flex';
-      ov.innerHTML='<div style="color:#ef4444;padding:20px;text-align:center;font-size:13px">Render error: '+err.message+'</div>';
+      ov.innerHTML='<div style="color:#ef4444;padding:20px;text-align:center;font-size:13px;font-family:monospace">Render error:<br>'+err.message+'</div>';
     }
   }
 }
