@@ -1141,7 +1141,35 @@ document.getElementById('btn-home').onclick=()=>openTeamPicker('home');
 document.getElementById('btn-away').onclick=()=>openTeamPicker('away');
 
 // ── EXPORT ──
-document.getElementById('xbtn').onclick=()=>{const a=document.createElement('a');a.download='WC2026_Tactics.png';a.href=cv.toDataURL('image/png');a.click();};
+document.getElementById('xbtn').onclick=()=>{
+  // Render to a temporary high-res canvas for export
+  const EXPORT_SCALE = 3; // 3x for crisp print/share quality
+  const exportCanvas = document.createElement('canvas');
+  exportCanvas.width  = W * EXPORT_SCALE;
+  exportCanvas.height = H * EXPORT_SCALE;
+  const exportCtx = exportCanvas.getContext('2d');
+  exportCtx.setTransform(EXPORT_SCALE, 0, 0, EXPORT_SCALE, 0, 0);
+  // Redraw everything at export scale
+  const prevCtx = ctx;
+  const _ctx = ctx;
+  // Temporarily swap context
+  const origW = cv.width, origH = cv.height;
+  // Draw current state onto export canvas by reusing draw functions
+  exportCtx.setTransform(EXPORT_SCALE, 0, 0, EXPORT_SCALE, 0, 0);
+  drawPitch(exportCtx);
+  drawings.forEach(s=>renderShape(exportCtx,s));
+  tokens.forEach((t,i)=>{
+    const px=t.fx*W, py=t.fy*H;
+    t.role==='sub'
+      ? drawSubToken(exportCtx,t.player,px,py,false,t.side)
+      : drawStarterToken(exportCtx,t.player,px,py,false,t.side);
+  });
+  if(ball) drawBall(exportCtx, ball.fx, ball.fy, false);
+  const a=document.createElement('a');
+  a.download='Tactics.png';
+  a.href=exportCanvas.toDataURL('image/png',1.0);
+  a.click();
+};
 
 
 // ── SAVE / LOAD (Supabase) ──
@@ -2179,8 +2207,23 @@ document.getElementById('btn-export-ratings').onclick = ()=>{
   const avgCol=ratingColor(parseFloat(avg));
 
   // Snapshot the canvas at full resolution
-  // Snapshot at full physical resolution for crisp export
-  const pitchSnapshot = cv.toDataURL('image/png');
+  // Render high-res snapshot for export report
+  const SNAP_SCALE = 2;
+  const snapCanvas = document.createElement('canvas');
+  snapCanvas.width  = W * SNAP_SCALE;
+  snapCanvas.height = H * SNAP_SCALE;
+  const snapCtx = snapCanvas.getContext('2d');
+  snapCtx.setTransform(SNAP_SCALE, 0, 0, SNAP_SCALE, 0, 0);
+  drawPitch(snapCtx);
+  drawings.forEach(s=>renderShape(snapCtx,s));
+  tokens.forEach(t=>{
+    const px=t.fx*W, py=t.fy*H;
+    t.role==='sub'
+      ? drawSubToken(snapCtx,t.player,px,py,false,t.side)
+      : drawStarterToken(snapCtx,t.player,px,py,false,t.side);
+  });
+  if(ball) drawBall(snapCtx, ball.fx, ball.fy, false);
+  const pitchSnapshot = snapCanvas.toDataURL('image/png', 1.0);
 
   const html_out=`<!DOCTYPE html>
 <html>
